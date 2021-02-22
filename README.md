@@ -1,15 +1,11 @@
 # simple-did-agent
 
-A simple DID agent that:
-- creates a `did:web` DID
-- add a Baseline and Veramo endpoint to the same DID document
-- expose the DID Document in `/.well-known/did.json`
-- expose the DID configuration at: `/.well-known/did-configuration.json`
+A simple DID agent for demonstration purpose, which generates DID Web Identifiers on the go based in the hostname requested.
 
-As this agent uses DID web, it requires to be executed under the domain used in the DID and using an HTTPS server.
+As soon a request is made to `https://<domain>/.well-known/did-configuration.json` a new DID is generated, like `did:web:<domain>`, and a DID configuration file is returned containing the DID address just created. The DID is also populated with 2 endpoints (Baseline and Veramo) in order to demonstrate the usage of DID documents with endpoints.
 
 ## Usage
 - Build: \
 `yarn && yarn build`
 - Run: \
-`PORT=<server port> DOMAIN=<did web domain> BASELINE_ENDPOINT=<baseline endpoint> yarn start`
+`PORT=<server port> yarn start`

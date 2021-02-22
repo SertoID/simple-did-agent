@@ -24,12 +24,24 @@ const didDocRouter = WebDidDocRouter({
 });
 
 export const start = async (port: number) => {
-    const domain = process.env.DOMAIN;
-    console.log("Domain: " + domain);
+    const app = express();
+    app.use(basePath, agentRouter); // Veramo DID agent 
+    app.use(schemaPath, schemaRouter); // Docs
+    app.use(didDocRouter); // did:web Document
+    app.get("/.well-known/did-configuration.json", async (req, res) => {
+        var host = req.hostname; // req.get('host');
+        const wkDidConfig = await buildDomainDid(host, port);
+        res.contentType("application/json").send(wkDidConfig);
+    });
+    app.listen(port);
+    console.log("Listening on port " + port);
+};
+
+async function buildDomainDid(domain: string, port: number) {
+    console.log("Domain[" + domain + "]");
 
     // Get or create a DID
     let did: string = await getDid(domain);
-    console.log("DID: " + did);
 
     // Adding endpoints to DID document
     await addDidServices(did, domain, port);
@@ -37,32 +49,18 @@ export const start = async (port: number) => {
     // Generate the DID configuation
     const didConfig = await agent.generateDidConfiguration({ dids: [did], domain });
     const wkDidConfig = JSON.stringify(didConfig, null, 4);
-    console.log("DID configuration: " + wkDidConfig);
 
-    // Enable HTTPS to have the following line working
-    // const didDocument = await agent.resolveDid({ didUrl: did });
-    // console.log("DID Documento: " + JSON.stringify(didDocument, null, 4));
+    console.log("Domain[" + domain + "] " + " DID[" + did + "] DID configuration:\n" + wkDidConfig);
 
-    const app = express();
-    app.use(basePath, agentRouter); // Veramo DID agent 
-    app.use(schemaPath, schemaRouter); // Docs
-    app.use(didDocRouter); // did:web Document
-
-    // DID configuration
-    app.get("/.well-known/did-configuration.json", (req, res) => {
-        res.contentType("application/json").send(wkDidConfig);
-    });
-
-    app.listen(port);
-    console.log("Listening on port " + port);
-};
+    return wkDidConfig;
+}
 
 async function addDidServices(did: string, domain: string, port: number) {
     await agent.didManagerAddService({
         did,
         service: {
             id: did + "#baseline",
-            serviceEndpoint: process.env.BASELINE_ENDPOINT,
+            serviceEndpoint: domain + ":" + port + "0", // Receive as parameter?
             type: "Baseline",
             description: "Workflows using Baseline Protocol"
         }
@@ -80,7 +78,9 @@ async function addDidServices(did: string, domain: string, port: number) {
 }
 
 async function getDid(domain: string) {
-    const allDids: IIdentifier[] = await agent.didManagerFind({});
+    const allDids: IIdentifier[] = await agent.didManagerFind({
+        alias: domain
+    });
     let didDetails: IIdentifier;
     let did: string;
     if (allDids.length == 0) {
