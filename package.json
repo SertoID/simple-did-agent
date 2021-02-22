@@ -1,7 +1,7 @@
 {
   "name": "simple-did-agent",
   "version": "1.0.0",
-  "description": "A simple DID agent using Veramo",
+  "description": "A simple DID agent using Veramo, Well-Known DID Configuration and Baseline service endpoint",
   "main": "./build/index.js",
   "repository": "git@github.com:SertoID/simple-did-agent.git",
   "author": "Italo Borssatto <italo.borssatto@mesh.xyz>",
