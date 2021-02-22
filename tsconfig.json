@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "preserveConstEnums": true,
+    "target": "ES2018",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "downlevelIteration": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "removeComments": true,
+    "outDir": "./build",
+    "rootDir": "./src"
+  },
+  "exclude": [
+    "src/test",
+    "node_modules",
+    "*.(test|spec).ts"
+  ]
+}
