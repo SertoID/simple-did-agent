@@ -1,13 +1,12 @@
 # simple-did-agent
 
-A simple DID agent using:
-- Veramo
-- `did:web`
-- Well-Known DID Configuration
-- Baseline service endpoint
+A simple DID agent that:
+- creates a `did:web` DID
+- add a Baseline and Veramo endpoint to the same DID document
+- expose the DID Document in `/.well-known/did.json`
+- expose the DID configuration at: `/.well-known/did-configuration.json`
 
-This agent uses DID web, which requires it running under an specified domain and using an HTTPS server.
-
+As this agent uses DID web, it requires to be executed under the domain used in the DID and using an HTTPS server.
 
 ## Usage
 - Build: \
