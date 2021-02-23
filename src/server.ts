@@ -61,7 +61,7 @@ async function addDidServices(did: string, domain: string, port: number) {
         did,
         service: {
             id: did + "#baseline",
-            serviceEndpoint: domain + ":" + port + "0", // Receive as parameter?
+            serviceEndpoint: process.env.BASELINE_MESSAGING_ENDPOINT,
             type: "Baseline",
             description: "Workflows using Baseline Protocol"
         }
