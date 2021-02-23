@@ -1,0 +1,9 @@
+version: "3.8"
+services:
+  demo-did-agent:
+    container_name: demo-did-agent
+    image: "513362828658.dkr.ecr.us-east-2.amazonaws.com/demo-did-agent:latest"
+    ports:
+      - "80:80"
+    environment:
+      - PORT=80
