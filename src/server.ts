@@ -28,6 +28,8 @@ export const start = async (port: number) => {
     app.use(basePath, agentRouter); // Veramo DID agent 
     app.use(schemaPath, schemaRouter); // Docs
     app.use(didDocRouter); // did:web Document
+
+    // TODO Receive as parameters the configuration for the agent
     app.get("/.well-known/did-configuration.json", async (req, res) => {
         var host = req.hostname; // req.get('host');
         const wkDidConfig = await buildDomainDid(host, port);
@@ -38,6 +40,7 @@ export const start = async (port: number) => {
 };
 
 async function buildDomainDid(domain: string, port: number) {
+    // TODO Add random number of DIDs
     // Get or create a DID
     let did: string = await getDid(domain);
 
@@ -45,7 +48,7 @@ async function buildDomainDid(domain: string, port: number) {
     await addDidServices(did, domain, port);
 
     // Generate the DID configuation
-    const didConfig = await agent.generateDidConfiguration({ dids: [did], domain });
+    const didConfig = await agent.generateDidConfiguration({ dids: [did], domain }); // FIXME No DID in the subject!!!
     const wkDidConfig = JSON.stringify(didConfig, null, 4);
 
     console.log("Domain[" + domain + "] " + " DID[" + did + "] DID configuration:\n" + wkDidConfig);
