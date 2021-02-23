@@ -38,8 +38,6 @@ export const start = async (port: number) => {
 };
 
 async function buildDomainDid(domain: string, port: number) {
-    console.log("Domain[" + domain + "]");
-
     // Get or create a DID
     let did: string = await getDid(domain);
 
