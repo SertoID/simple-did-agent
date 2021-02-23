@@ -1,0 +1,66 @@
+version: 2.1
+orbs:
+  aws-ecr: circleci/aws-ecr@6.15.2
+  aws-eb: circleci/aws-elastic-beanstalk@1.0.1
+
+jobs:
+  build:
+    docker:
+      - image: circleci/node:15.1
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore yarn cache
+          key: node-modules-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install modules
+          command: yarn --frozen-lockfile install
+      - save_cache:
+          name: Save yarn cache
+          key: node-modules-{{ checksum "yarn.lock" }}
+          paths:
+            - node_modules
+      - run:
+          name: Building services
+          command: yarn build
+          no_output_timeout: 30m
+      - persist_to_workspace:
+          root: ./
+          paths:
+            - build
+            - devops
+            - node_modules
+            - package.json
+            - Dockerfile
+
+workflows:
+  build-deploy:
+    jobs:
+      - build
+      - aws-ecr/build-and-push-image:
+          filters:
+            branches:
+              only:
+                - main
+          requires:
+            - build
+          attach_workspace: true
+          setup-remote-docker: true
+          account-url: AWS_ECR_ACCOUNT_URL
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+          region: AWS_DEFAULT_REGION
+          create-repo: true
+          checkout: false
+          repo: demo-did-agent
+          tag: "latest,$CIRCLE_SHA1"
+      - aws-eb/deploy:
+          app-dir: ./devops/deploy
+          environment-name: demo-did-agent
+          label: version-<<pipeline.number>>
+          filters:
+            branches:
+              only:
+                - main
+          requires:
+            - aws-ecr/build-and-push-image
