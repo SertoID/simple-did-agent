@@ -55,7 +55,7 @@ workflows:
           tag: "latest,$CIRCLE_SHA1"
       - aws-eb/deploy:
           app-dir: ./devops/deploy
-          environment-name: demo-did-agent
+          environment-name: DemoDidAgent
           label: version-<<pipeline.number>>
           filters:
             branches:
