@@ -57,11 +57,14 @@ async function buildDomainDid(domain: string, port: number) {
 }
 
 async function addDidServices(did: string, domain: string, port: number) {
+    let baselineEndpoint = process.env.BASELINE_MESSAGING_ENDPOINT;
+    if (!baselineEndpoint) baselineEndpoint = "nats://" + domain + "/baseline";
+
     await agent.didManagerAddService({
         did,
         service: {
             id: did + "#baseline",
-            serviceEndpoint: process.env.BASELINE_MESSAGING_ENDPOINT,
+            serviceEndpoint: baselineEndpoint,
             type: "Baseline",
             description: "Workflows using Baseline Protocol"
         }
