@@ -35,7 +35,12 @@ export const start = async (port: number) => {
         const wkDidConfig = await buildDomainDid(host, port);
         res.contentType("application/json").send(wkDidConfig);
     });
+
+    // Only to avoid 404 errors
+    app.get("/", async (req, res) => res.contentType("application/json").send({}));
+
     app.listen(port);
+
     console.log("Listening on port " + port);
 };
 
