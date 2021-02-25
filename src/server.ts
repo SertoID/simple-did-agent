@@ -2,6 +2,7 @@ import { IIdentifier } from '@veramo/core';
 import { AgentRouter, ApiSchemaRouter, WebDidDocRouter } from '@veramo/remote-server';
 import express from 'express';
 import { agent } from './agent';
+import md5 from 'md5';
 
 const getAgentForRequest = async (req: express.Request) => agent
 const exposedMethods = agent.availableMethods()
@@ -44,58 +45,79 @@ export const start = async (port: number) => {
     console.log("Listening on port " + port);
 };
 
-async function buildDomainDid(domain: string, port: number) {
-    // TODO Add random number of DIDs
-    // Get or create a DID
-    let did: string = await getDid(domain);
+async function buildDomainDid(domain: string, port: number, numberOfDids: number = 1, hasBaselineService: boolean = true, hasVeramoService: boolean = true) {
+    if (numberOfDids < 1) numberOfDids = 1;
 
-    // Adding endpoints to DID document
-    await addDidServices(did, domain, port);
+    const dids: string[] = [];
+    for (var i = 0; i < numberOfDids; i++) {
+        // Get or create a DID
+        let did: string = await getDid(domain, "did" + i);
+
+        // Adding endpoints to DID document
+        await addDidServices(did, domain, hasBaselineService, hasVeramoService);
+
+        dids.push(did);
+    }
 
     // Generate the DID configuation
-    const didConfig = await agent.generateDidConfiguration({ dids: [did], domain }); // FIXME No DID in the subject!!!
-    const wkDidConfig = JSON.stringify(didConfig, null, 4);
+    const wkDidConfig = await getDidConfig(dids, domain);
 
-    console.log("Domain[" + domain + "] " + " DID[" + did + "] DID configuration:\n" + wkDidConfig);
+    console.log("Domain[" + domain + "] " + " DIDs[" + dids + "] DID configuration:\n" + wkDidConfig);
 
     return wkDidConfig;
 }
 
-async function addDidServices(did: string, domain: string, port: number) {
-    let baselineEndpoint = process.env.BASELINE_MESSAGING_ENDPOINT;
-    if (!baselineEndpoint) baselineEndpoint = "nats://" + domain + "/baseline";
+const cache = new Map();
 
-    await agent.didManagerAddService({
-        did,
-        service: {
-            id: did + "#baseline",
-            serviceEndpoint: baselineEndpoint,
-            type: "Baseline",
-            description: "Workflows using Baseline Protocol"
-        }
-    });
+async function getDidConfig(dids: string[], domain: string) {
+    const cacheKey: string = md5(JSON.stringify({ dids, domain }));
+    if (cache.has(cacheKey)) return cache.get(cacheKey);
 
-    await agent.didManagerAddService({
-        did,
-        service: {
-            id: did + "#veramo",
-            serviceEndpoint: domain + ":" + port,
-            type: "Veramo Agent",
-            description: "A Veramo DID agent"
-        }
-    });
+    const didConfig = await agent.generateDidConfiguration({ dids, domain });
+    const wkDidConfig = JSON.stringify(didConfig, null, 4);
+    cache.set(cacheKey, wkDidConfig);
+
+    return wkDidConfig;
 }
 
-async function getDid(domain: string) {
-    const allDids: IIdentifier[] = await agent.didManagerFind({
-        alias: domain
-    });
+async function addDidServices(did: string, domain: string, veramo: boolean = true, baseline: boolean = true) {
+    if (baseline) {
+        let baselineEndpoint = process.env.BASELINE_MESSAGING_ENDPOINT;
+        if (!baselineEndpoint) baselineEndpoint = "nats://" + domain + "/baseline";
+        await agent.didManagerAddService({
+            did,
+            service: {
+                id: did + "#baseline",
+                serviceEndpoint: baselineEndpoint,
+                type: "Baseline",
+                description: "Workflows using Baseline Protocol"
+            }
+        });
+    }
+
+    if (veramo) {
+        await agent.didManagerAddService({
+            did,
+            service: {
+                id: did + "#veramo",
+                serviceEndpoint: domain + "/veramo",
+                type: "Veramo",
+                description: "Veramo API"
+            }
+        });
+    }
+}
+
+async function getDid(domain: string, path: string) {
+    const alias = domain + (path ? ":" + path : "");
+
+    const allDids: IIdentifier[] = await agent.didManagerFind({ alias });
     let didDetails: IIdentifier;
     let did: string;
     if (allDids.length == 0) {
         didDetails = await agent.didManagerCreate({
             provider: 'did:web',
-            alias: domain,
+            alias,
         });
         did = didDetails.did;
     }
