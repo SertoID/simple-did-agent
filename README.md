@@ -18,4 +18,4 @@ It's possible to generate DIDs with specific endpoints passing parameters in the
 * **hasVeramo**: *boolean* - Indicates whether a Veramo endpoint should exist in the DID or not.
 
 Example:
-https://<domain>/.well-known/did-configuration.json?numDids=2&hasBaseline=true&hasVeramo=true
+`https://<domain>/.well-known/did-configuration.json?numDids=2&hasBaseline=true&hasVeramo=true`
