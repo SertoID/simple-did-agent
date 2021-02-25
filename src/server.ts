@@ -62,8 +62,6 @@ async function buildDomainDid(domain: string, port: number, numberOfDids: number
     // Generate the DID configuation
     const wkDidConfig = await getDidConfig(dids, domain);
 
-    console.log("Domain[" + domain + "] " + " DIDs[" + dids + "] DID configuration:\n" + wkDidConfig);
-
     return wkDidConfig;
 }
 
@@ -76,6 +74,8 @@ async function getDidConfig(dids: string[], domain: string) {
     const didConfig = await agent.generateDidConfiguration({ dids, domain });
     const wkDidConfig = JSON.stringify(didConfig, null, 4);
     cache.set(cacheKey, wkDidConfig);
+
+    console.log("Domain[" + domain + "] " + " Linked DIDs[" + dids + "] DID configuration:\n" + wkDidConfig);
 
     return wkDidConfig;
 }
