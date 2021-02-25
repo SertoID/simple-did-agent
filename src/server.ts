@@ -35,8 +35,8 @@ export const start = async (port: number) => {
         var host = req.hostname;
 
         const numberOfDids: number = req.query.numDids ? +req.query.numDids : 1;
-        const hasBaseline: boolean = req.query.hasBaseline === "true";
-        const hasVeramo: boolean = req.query.hasVeramo === "true";
+        const hasBaseline: boolean = req.query.hasBaseline == undefined || req.query.hasBaseline === "true";
+        const hasVeramo: boolean = req.query.hasVeramo == undefined || req.query.hasVeramo === "true";
 
         const wkDidConfig = await buildDomainDid(host, port, numberOfDids, hasBaseline, hasVeramo);
         res.contentType("application/json").send(wkDidConfig);
