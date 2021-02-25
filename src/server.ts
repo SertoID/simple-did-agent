@@ -32,8 +32,13 @@ export const start = async (port: number) => {
 
     // TODO Receive as parameters the configuration for the agent
     app.get("/.well-known/did-configuration.json", async (req, res) => {
-        var host = req.hostname; // req.get('host');
-        const wkDidConfig = await buildDomainDid(host, port);
+        var host = req.hostname;
+
+        const numberOfDids: number = req.query.numDids ? +req.query.numDids : 1;
+        const hasBaseline: boolean = req.query.hasBaseline === "true";
+        const hasVeramo: boolean = req.query.hasVeramo === "true";
+
+        const wkDidConfig = await buildDomainDid(host, port, numberOfDids, hasBaseline, hasVeramo);
         res.contentType("application/json").send(wkDidConfig);
     });
 
@@ -51,7 +56,7 @@ async function buildDomainDid(domain: string, port: number, numberOfDids: number
     const dids: string[] = [];
     for (var i = 0; i < numberOfDids; i++) {
         // Get or create a DID
-        let did: string = await getDid(domain, "did" + i);
+        let did: string = await getDid(domain, numberOfDids > 1 ? "did" + i : undefined);
 
         // Adding endpoints to DID document
         await addDidServices(did, domain, hasBaselineService, hasVeramoService);
@@ -80,7 +85,7 @@ async function getDidConfig(dids: string[], domain: string) {
     return wkDidConfig;
 }
 
-async function addDidServices(did: string, domain: string, veramo: boolean = true, baseline: boolean = true) {
+async function addDidServices(did: string, domain: string, baseline: boolean = true, veramo: boolean = true,) {
     if (baseline) {
         let baselineEndpoint = process.env.BASELINE_MESSAGING_ENDPOINT;
         if (!baselineEndpoint) baselineEndpoint = "nats://" + domain + "/baseline";
