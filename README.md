@@ -14,8 +14,8 @@ As soon a request is made to `https://<domain>/.well-known/did-configuration.jso
 
 It's possible to generate DIDs with specific endpoints passing parameters in the DID config query:
 * **numDids**: *number* - Number of DIDs to add in the DID config.
-* **hasBaseline**: *boolean* - Indicates wheder a Baseline endpoint should exist in the DID.
-* **hasVeramo**: *boolean* - Indicates if a Veramo endpoint should exist in the DID.
+* **hasBaseline**: *boolean* - Indicates whether a Baseline endpoint should exist in the DID or not.
+* **hasVeramo**: *boolean* - Indicates whether a Veramo endpoint should exist in the DID or not.
 
 Example:
 https://<domain>/.well-known/did-configuration.json?numDids=2&hasBaseline=true&hasVeramo=true
