@@ -24,6 +24,12 @@ const didDocRouter = WebDidDocRouter({
     getAgentForRequest
 });
 
+class DidConfigParams {
+    numDids: number = 1;
+    hasBaseline: boolean = true;
+    hasVeramo: boolean = true;
+};
+
 export const start = async (port: number) => {
     const app = express();
     app.use(basePath, agentRouter); // Veramo DID agent 
@@ -34,11 +40,14 @@ export const start = async (port: number) => {
     app.get("/.well-known/did-configuration.json", async (req, res) => {
         var host = req.hostname;
 
-        const numberOfDids: number = req.query.numDids ? +req.query.numDids : 1;
+
+        const hasParams: boolean = req.query.numDids != undefined || req.query.hasBaseline != undefined || req.query.hasVeramo != undefined;
+        const numDids: number = req.query.numDids ? +req.query.numDids : 1;
         const hasBaseline: boolean = req.query.hasBaseline == undefined || req.query.hasBaseline === "true";
         const hasVeramo: boolean = req.query.hasVeramo == undefined || req.query.hasVeramo === "true";
+        const params: DidConfigParams = hasParams ? { numDids, hasBaseline, hasVeramo } : undefined;
 
-        const wkDidConfig = await buildDomainDid(host, port, numberOfDids, hasBaseline, hasVeramo);
+        const wkDidConfig = await buildDomainDid(host, port, params);
         res.contentType("application/json").send(wkDidConfig);
     });
 
@@ -50,16 +59,20 @@ export const start = async (port: number) => {
     console.log("Listening on port " + port);
 };
 
-async function buildDomainDid(domain: string, port: number, numberOfDids: number = 1, hasBaselineService: boolean = true, hasVeramoService: boolean = true) {
-    if (numberOfDids < 1) numberOfDids = 1;
+async function buildDomainDid(domain: string, port: number, params?: DidConfigParams) {
+    if (!params) {
+        const wkDidConfig = getDidConfigCache(domain);
+        if (wkDidConfig) return wkDidConfig;
+        params = new DidConfigParams();
+    }
 
     const dids: string[] = [];
-    for (var i = 0; i < numberOfDids; i++) {
+    for (var i = 0; i < params.numDids; i++) {
         // Get or create a DID
-        let did: string = await getDid(domain, numberOfDids > 1 ? "did" + i : undefined);
+        let did: string = await getDid(domain, params.numDids > 1 ? "did" + i : undefined);
 
         // Adding endpoints to DID document
-        await addDidServices(did, domain, hasBaselineService, hasVeramoService);
+        await addDidServices(did, domain, params.hasBaseline, params.hasVeramo);
 
         dids.push(did);
     }
@@ -72,13 +85,20 @@ async function buildDomainDid(domain: string, port: number, numberOfDids: number
 
 const cache = new Map();
 
-async function getDidConfig(dids: string[], domain: string) {
+function getDidConfigCache(domain: string) {
     const cacheKey: string = md5(domain);
     if (cache.has(cacheKey)) return cache.get(cacheKey);
+}
 
+function cacheDidConfig(domain: string, didConfig: string) {
+    const cacheKey: string = md5(domain);
+    cache.set(cacheKey, didConfig);
+}
+
+async function getDidConfig(dids: string[], domain: string) {
     const didConfig = await agent.generateDidConfiguration({ dids, domain });
     const wkDidConfig = JSON.stringify(didConfig, null, 4);
-    cache.set(cacheKey, wkDidConfig);
+    cacheDidConfig(domain, wkDidConfig);
 
     console.log("Domain[" + domain + "] " + " Linked DIDs[" + dids + "] DID configuration:\n" + wkDidConfig);
 
