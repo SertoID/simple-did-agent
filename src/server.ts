@@ -73,7 +73,7 @@ async function buildDomainDid(domain: string, port: number, numberOfDids: number
 const cache = new Map();
 
 async function getDidConfig(dids: string[], domain: string) {
-    const cacheKey: string = md5(JSON.stringify({ dids, domain }));
+    const cacheKey: string = md5(domain);
     if (cache.has(cacheKey)) return cache.get(cacheKey);
 
     const didConfig = await agent.generateDidConfiguration({ dids, domain });
